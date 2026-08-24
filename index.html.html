@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Operación Bikini">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Operación Bikini Perpetua - Seguimiento de calorías, macros y entrenamientos">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Operación Bikini Perpetua%22,%22short_name%22:%22Operación Bikini%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22scope%22:%22./%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%231e3a8a%22,%22orientation%22:%22portrait%22}">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231e3a8a'/%3E%3Ctext x='90' y='110' font-size='70' fill='%23ff9f40' text-anchor='middle' font-weight='bold'%3E💪%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%231e3a8a'/%3E%3Ctext x='96' y='120' font-size='80' fill='%23ff9f40' text-anchor='middle' font-weight='bold'%3E💪%3C/text%3E%3C/svg%3E">
+    <title>Operación Bikini Perpetua</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f2e 100%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #1a1f2e 0%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            padding: 16px 20px;
+            border-bottom: 2px solid #ff9f40;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .user-btn {
+            padding: 8px 12px;
+            border: 2px solid #334155;
+            background: transparent;
+            color: #94a3b8;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-btn.active {
+            border-color: #ff9f40;
+            color: #ff9f40;
+            background: rgba(255, 159, 64, 0.1);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-mini {
+            background: rgba(255, 159, 64, 0.1);
+            border: 1px solid #ff9f40;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .stat-mini-label {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .stat-mini-value {
+            font-size: 14px;
+            color: #ff9f40;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #334155;
+            padding: 0 8px;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            min-width: 60px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-button.active {
+            color: #ff9f40;
+            border-bottom-color: #ff9f40;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dashboard {
+            padding: 16px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.2) 0%, rgba(30, 58, 138, 0.05) 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card.gradient-accent {
+            background: linear-gradient(135deg, rgba(255, 159, 64, 0.15) 0%, rgba(255, 159, 64, 0.05) 100%);
+            border-color: #ff9f40;
+        }
+
+        .card-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            letter-spacing: 0.8px;
+        }
+
+        .big-stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .big-value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .big-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 159, 64, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 1px solid #ff9f40;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff9f40, #f97316);
+            border-radius: 5px;
+            transition: width 0.5s ease-out;
+        }
+
+        .macro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .macro-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .macro-card.protein {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .macro-card.carbs {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .macro-card.fat {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .macro-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .macro-value {
+            font-size: 16px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .macro-progress {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .entry-item {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .entry-info {
+            flex: 1;
+        }
+
+        .entry-name {
+            font-weight: 700;
+            color: #ff9f40;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .entry-details {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        .entry-value {
+            font-weight: 700;
+            color: #ff9f40;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #ff9f40;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e2e8f0;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #ff9f40;
+            box-shadow: 0 0 0 3px rgba(255, 159, 64, 0.2);
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            color: white;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 159, 64, 0.1);
+            color: #ff9f40;
+            border: 1px solid #ff9f40;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, #1a1f2e 0%, #0f172a 100%);
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+            border-top: 2px solid #ff9f40;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+            border: none;
+            background: none;
+        }
+
+        .modal-close:before {
+            content: "✕";
+        }
+
+        .floating-fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 159, 64, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+
+        .floating-fab:active {
+            transform: scale(0.95);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .deficit-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #0f4c75, #1a7a96);
+            border: 1px solid #3b82f6;
+            color: #60a5fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .quick-btn {
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .quick-btn-comida {
+            background: linear-gradient(135deg, #ff9f40, #f97316);
+            color: white;
+        }
+
+        .quick-btn-entrenamiento {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+        }
+
+        .weight-status {
+            background: rgba(255, 159, 64, 0.15);
+            border-left: 4px solid #ff9f40;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ff9f40;
+            margin: 20px 16px 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-box {
+            background: rgba(30, 58, 138, 0.3);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .comparison-label {
+            color: #94a3b8;
+        }
+
+        .comparison-you {
+            color: #ff9f40;
+            font-weight: 700;
+        }
+
+        .comparison-partner {
+            color: #3b82f6;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="header">
+            <div class="header-top">
+                <h1>💪 Operación Bikini</h1>
+                <div class="user-selector">
+                    <button class="user-btn active" onclick="cambiarUsuario('luis')" title="Luis Miguel Mosquera Souto">LM</button>
+                    <button class="user-btn" onclick="cambiarUsuario('pareja')" title="Rosa González Peña">RG</button>
+                </div>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Calorías</div>
+                    <div class="stat-mini-value" id="header-cal">0/2900</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Peso</div>
+                    <div class="stat-mini-value" id="header-peso">-</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-label">Déficit</div>
+                    <div class="stat-mini-value" id="header-deficit">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-button" onclick="switchTab('nutricion')">Nutrición</button>
+            <button class="tab-button" onclick="switchTab('entrenamientos')">Entrenamientos</button>
+            <button class="tab-button" onclick="switchTab('analytics')">Analytics</button>
+            <button class="tab-button" onclick="switchTab('coach')">Coach</button>
+            <button class="tab-button" onclick="switchTab('config')">⚙️</button>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard">
+                <!-- CALORÍAS PRINCIPALES -->
+                <div class="card gradient-accent">
+                    <div class="card-title">Calorías Hoy</div>
+                    <div class="big-stat">
+                        <div class="big-value" id="cal-hoy">0</div>
+                        <div class="big-label">/ 2900 cal</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cal-progress" style="width: 0%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 8px;">
+                        <span>Consumidas: <strong style="color: #ff9f40;" id="cal-consumidas">0</strong></span>
+                        <span>Quemadas: <strong style="color: #3b82f6;" id="cal-quemadas">0</strong></span>
+                    </div>
+                    <div class="deficit-badge">
+                        🎯 Objetivo: -300 cal/día
+                    </div>
+                </div>
+
+                <!-- MACROS -->
+                <div class="card">
+                    <div class="card-title">Distribución de Macros</div>
+                    <div class="macro-grid">
+                        <div class="macro-card protein">
+                            <div class="macro-label">Proteína</div>
+                            <div class="macro-value" id="macro-p">0</div>
+                            <div class="macro-progress">/ 186g</div>
+                        </div>
+                        <div class="macro-card carbs">
+                            <div class="macro-label">Carbos</div>
+                            <div class="macro-value" id="macro-c">0</div>
+                            <div class="macro-progress">/ 360g</div>
+                        </div>
+                        <div class="macro-card fat">
+                            <div class="macro-label">Grasas</div>
+                            <div class="macro-value" id="macro-f">0</div>
+                            <div class="macro-progress">/ 75g</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESO -->
+                <div class="card">
+                    <div class="card-title">Peso Actual</div>
+                    <div class="big-stat">
+                        <div class="big-value" id="peso-actual">-</div>
+                        <div class="big-label">kg</div>
+                    </div>
+                    <div class="weight-status" id="weight-status"></div>
+                    <button class="btn btn-secondary" onclick="openModal('modal-peso')">📊 Registrar Peso</button>
+                </div>
+
+                <!-- ACCIONES RÁPIDAS -->
+                <div class="quick-actions">
+                    <button class="quick-btn quick-btn-comida" onclick="openModal('modal-comida')">🍽️ + Comida</button>
+                    <button class="quick-btn quick-btn-entrenamiento" onclick="openModal('modal-entrenamiento')">💪 + Entrenamiento</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUTRICIÓN -->
+        <div id="nutricion" class="tab-content">
+            <div class="section-title">Base de Datos de Productos</div>
+            <div style="padding: 0 16px;">
+                <button class="btn btn-secondary" onclick="openModal('modal-producto')" style="margin-bottom: 16px;">➕ Nuevo Producto</button>
+                <div id="productos-list"></div>
+            </div>
+
+            <div class="section-title">Comidas de Hoy</div>
+            <div style="padding: 0 16px; padding-bottom: 20px;">
+                <div id="comidas-list"></div>
+                <div class="empty-state" id="empty-comidas" style="display: none;">
+                    <div class="empty-state-emoji">🍽️</div>
+                    <p>Sin comidas registradas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENTRENAMIENTOS -->
+        <div id="entrenamientos" class="tab-content">
+            <div class="section-title">Entrenamientos de Hoy</div>
+            <div style="padding: 0 16px; padding-bottom: 20px;">
+                <div id="entrenamientos-list"></div>
+                <div class="empty-state" id="empty-entrenamientos" style="display: none;">
+                    <div class="empty-state-emoji">🏋️</div>
+                    <p>Sin entrenamientos registrados</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div id="analytics" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-title">Evolución de Peso</div>
+                    <div class="chart-container">
+                        <canvas id="chart-peso"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Calorías Semanal</div>
+                    <div class="chart-container">
+                        <canvas id="chart-calorias"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Comparativa con tu Pareja</div>
+                    <div class="comparison-box" id="comparison-container"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Histórico Completo</div>
+                    <div id="historico-peso"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COACH -->
+        <div id="coach" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-title">Enviar Análisis al Coach</div>
+                    <p style="font-size: 12px; color: #94a3b8; margin-bottom: 14px;">Selecciona el período a analizar:</p>
+                    <button class="btn btn-primary" onclick="generateReport('today')">📅 Reporte de Hoy</button>
+                    <button class="btn btn-primary" onclick="generateReport('week')">📊 Reporte Semanal</button>
+                    <button class="btn btn-primary" onclick="generateReport('month')">📈 Reporte Mensual</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Tu Reporte</div>
+                    <textarea id="report-text" style="width: 100%; height: 300px; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.4); color: #e2e8f0; resize: vertical;"></textarea>
+                    <button class="btn btn-primary" onclick="copiarReporte()" style="margin-top: 12px;">📋 Copiar y Enviar al Chat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURACIÓN -->
+        <div id="config" class="tab-content">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-title">⚙️ Configuración de Datos Base</div>
+                    <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Edita los datos personales de cada usuario</p>
+
+                    <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155;">
+                        <h3 style="color: #ff9f40; font-size: 14px; margin-bottom: 12px;">LM - Luis Miguel Mosquera Souto</h3>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Peso Inicial (kg)</label>
+                            <input type="number" id="config-luis-peso" min="0" step="0.1">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Objetivo Calórico Diario</label>
+                            <input type="number" id="config-luis-calorias" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Déficit Calórico Objetivo</label>
+                            <input type="number" id="config-luis-deficit" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Proteína Objetivo (g/día)</label>
+                            <input type="number" id="config-luis-proteina" min="0" step="5">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Carbohidratos Objetivo (g/día)</label>
+                            <input type="number" id="config-luis-carbos" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Grasas Objetivo (g/día)</label>
+                            <input type="number" id="config-luis-grasas" min="0" step="5">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="guardarConfigUsuario('luis')">Guardar Cambios</button>
+                    </div>
+
+                    <div>
+                        <h3 style="color: #3b82f6; font-size: 14px; margin-bottom: 12px;">RG - Rosa González Peña</h3>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Peso Inicial (kg)</label>
+                            <input type="number" id="config-pareja-peso" min="0" step="0.1">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Objetivo Calórico Diario</label>
+                            <input type="number" id="config-pareja-calorias" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Déficit Calórico Objetivo</label>
+                            <input type="number" id="config-pareja-deficit" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Proteína Objetivo (g/día)</label>
+                            <input type="number" id="config-pareja-proteina" min="0" step="5">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Carbohidratos Objetivo (g/día)</label>
+                            <input type="number" id="config-pareja-carbos" min="0" step="10">
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">Grasas Objetivo (g/día)</label>
+                            <input type="number" id="config-pareja-grasas" min="0" step="5">
+                        </div>
+
+                        <button class="btn btn-primary" onclick="guardarConfigUsuario('pareja')">Guardar Cambios</button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #334155;">
+                        <button class="btn btn-secondary" onclick="limpiarTodosDatos()" style="background: #fee2e2; color: #991b1b; border-color: #991b1b;">🗑️ Limpiar todos los datos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+    <div id="modal-comida" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-comida')"></button>
+            <h2 style="color: #ff9f40; margin-bottom: 20px;">🍽️ Registrar Comida</h2>
+
+            <div class="input-group">
+                <label class="input-label">Nombre de la comida</label>
+                <input type="text" id="comida-nombre" placeholder="Ej: Pollo a la plancha">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Peso (gramos)</label>
+                <input type="number" id="comida-peso" placeholder="200" min="0">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Calorías</label>
+                <input type="number" id="comida-calorias" placeholder="350" min="0">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Proteína (g)</label>
+                <input type="number" id="comida-proteina" placeholder="40" min="0" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Carbohidratos (g)</label>
+                <input type="number" id="comida-carbos" placeholder="30" min="0" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Grasas (g)</label>
+                <input type="number" id="comida-grasas" placeholder="8" min="0" step="0.1">
+            </div>
+
+            <button class="btn btn-primary" onclick="guardarComida()">Guardar Comida</button>
+            <button class="btn btn-secondary" onclick="closeModal('modal-comida')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modal-producto" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-producto')"></button>
+            <h2 style="color: #ff9f40; margin-bottom: 20px;">➕ Nuevo Producto</h2>
+
+            <div class="input-group">
+                <label class="input-label">Nombre del producto</label>
+                <input type="text" id="producto-nombre" placeholder="Ej: Queso Manchego">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Porción de referencia (g)</label>
+                <input type="number" id="producto-porcion" placeholder="100" min="0">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Calorías por porción</label>
+                <input type="number" id="producto-calorias" placeholder="350" min="0">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Proteína (g)</label>
+                <input type="number" id="producto-proteina" placeholder="25" min="0" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Carbohidratos (g)</label>
+                <input type="number" id="producto-carbos" placeholder="10" min="0" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Grasas (g)</label>
+                <input type="number" id="producto-grasas" placeholder="25" min="0" step="0.1">
+            </div>
+
+            <button class="btn btn-primary" onclick="guardarProducto()">Guardar Producto</button>
+            <button class="btn btn-secondary" onclick="closeModal('modal-producto')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modal-entrenamiento" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-entrenamiento')"></button>
+            <h2 style="color: #ff9f40; margin-bottom: 20px;">💪 Registrar Entrenamiento</h2>
+
+            <div class="input-group">
+                <label class="input-label">Tipo</label>
+                <select id="entrenamiento-tipo" onchange="actualizarCamposEntrenamiento()">
+                    <option value="">-- Selecciona --</option>
+                    <option value="fuerza">Fuerza</option>
+                    <option value="cardio">Cardio</option>
+                    <option value="deporte">Deporte</option>
+                </select>
+            </div>
+
+            <div id="campos-fuerza" style="display: none;">
+                <div class="input-group">
+                    <label class="input-label">Ejercicio</label>
+                    <input type="text" id="fuerza-ejercicio" placeholder="Sentadilla">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Series</label>
+                    <input type="number" id="fuerza-series" placeholder="4" min="1">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Repeticiones</label>
+                    <input type="number" id="fuerza-reps" placeholder="8" min="1">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Peso (kg)</label>
+                    <input type="number" id="fuerza-peso" placeholder="100" min="0" step="0.5">
+                </div>
+            </div>
+
+            <div id="campos-cardio" style="display: none;">
+                <div class="input-group">
+                    <label class="input-label">Duración (min)</label>
+                    <input type="number" id="cardio-duracion" placeholder="45" min="1">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Velocidad (km/h)</label>
+                    <input type="number" id="cardio-velocidad" placeholder="8.5" min="0" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Inclinación (%)</label>
+                    <input type="number" id="cardio-inclinacion" placeholder="5" min="0" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Intensidad</label>
+                    <select id="cardio-intensidad">
+                        <option value="baja">Baja</option>
+                        <option value="moderada" selected>Moderada</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="campos-deporte" style="display: none;">
+                <div class="input-group">
+                    <label class="input-label">Deporte</label>
+                    <input type="text" id="deporte-tipo" placeholder="Fútbol">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Duración (min)</label>
+                    <input type="number" id="deporte-duracion" placeholder="60" min="1">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Intensidad</label>
+                    <select id="deporte-intensidad">
+                        <option value="baja">Baja</option>
+                        <option value="moderada" selected>Moderada</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="guardarEntrenamiento()">Guardar</button>
+            <button class="btn btn-secondary" onclick="closeModal('modal-entrenamiento')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modal-peso" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal-peso')"></button>
+            <h2 style="color: #ff9f40; margin-bottom: 20px;">📊 Registrar Peso</h2>
+
+            <div class="input-group">
+                <label class="input-label">Peso (kg)</label>
+                <input type="number" id="peso-valor" placeholder="93" min="0" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Hora</label>
+                <input type="time" id="peso-hora">
+            </div>
+
+            <button class="btn btn-primary" onclick="guardarPeso()">Guardar Peso</button>
+            <button class="btn btn-secondary" onclick="closeModal('modal-peso')">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        let USUARIOS = {
+            luis: {
+                nombre: 'Luis Miguel Mosquera Souto',
+                diminutivo: 'LM',
+                tdee: 3200,
+                deficit: 300,
+                calorias_objetivo: 2900,
+                proteina_objetivo: 186,
+                carbos_objetivo: 360,
+                grasas_objetivo: 75,
+                peso_inicial: 93
+            },
+            pareja: {
+                nombre: 'Rosa González Peña',
+                diminutivo: 'RG',
+                tdee: 2400,
+                deficit: 250,
+                calorias_objetivo: 2150,
+                proteina_objetivo: 150,
+                carbos_objetivo: 270,
+                grasas_objetivo: 60,
+                peso_inicial: 57
+            }
+        };
+
+        let usuarioActual = 'luis';
+        let chartPeso = null;
+        let chartCalorias = null;
+
+        function init() {
+            actualizarFecha();
+            cargarDatos();
+            cargarConfiguracion();
+            renderizar();
+            setInterval(renderizar, 1000);
+        }
+
+        function cargarConfiguracion() {
+            const configGuardada = localStorage.getItem('operacion-bikini-config');
+            if (configGuardada) {
+                const config = JSON.parse(configGuardada);
+                USUARIOS = { ...USUARIOS, ...config };
+            }
+            // Guardar la configuración inicial si no existe
+            guardarConfiguracionLocal();
+        }
+
+        function guardarConfiguracionLocal() {
+            localStorage.setItem('operacion-bikini-config', JSON.stringify(USUARIOS));
+        }
+
+        function actualizarFecha() {
+            window.fechaHoy = new Date().toISOString().split('T')[0];
+        }
+
+        function cambiarUsuario(usuario) {
+            usuarioActual = usuario;
+            document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderizar();
+        }
+
+        function guardarDatos() {
+            localStorage.setItem('operacion-bikini-datos', JSON.stringify({
+                productos: window.productos || [],
+                comidas: window.comidas || [],
+                entrenamientos: window.entrenamientos || [],
+                pesos: window.pesos || []
+            }));
+        }
+
+        function cargarDatos() {
+            const datos = localStorage.getItem('operacion-bikini-datos');
+            if (datos) {
+                const parsed = JSON.parse(datos);
+                window.productos = parsed.productos || [];
+                window.comidas = parsed.comidas || [];
+                window.entrenamientos = parsed.entrenamientos || [];
+                window.pesos = parsed.pesos || [];
+            } else {
+                window.productos = [];
+                window.comidas = [];
+                window.entrenamientos = [];
+                window.pesos = [];
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            setTimeout(() => {
+                if (tab === 'analytics') {
+                    actualizarGraficos();
+                } else if (tab === 'config') {
+                    cargarCamposConfiguracion();
+                }
+            }, 100);
+        }
+
+        function cargarCamposConfiguracion() {
+            // LUIS
+            document.getElementById('config-luis-peso').value = USUARIOS.luis.peso_inicial;
+            document.getElementById('config-luis-calorias').value = USUARIOS.luis.calorias_objetivo;
+            document.getElementById('config-luis-deficit').value = USUARIOS.luis.deficit;
+            document.getElementById('config-luis-proteina').value = USUARIOS.luis.proteina_objetivo;
+            document.getElementById('config-luis-carbos').value = USUARIOS.luis.carbos_objetivo;
+            document.getElementById('config-luis-grasas').value = USUARIOS.luis.grasas_objetivo;
+
+            // PAREJA
+            document.getElementById('config-pareja-peso').value = USUARIOS.pareja.peso_inicial;
+            document.getElementById('config-pareja-calorias').value = USUARIOS.pareja.calorias_objetivo;
+            document.getElementById('config-pareja-deficit').value = USUARIOS.pareja.deficit;
+            document.getElementById('config-pareja-proteina').value = USUARIOS.pareja.proteina_objetivo;
+            document.getElementById('config-pareja-carbos').value = USUARIOS.pareja.carbos_objetivo;
+            document.getElementById('config-pareja-grasas').value = USUARIOS.pareja.grasas_objetivo;
+        }
+
+        function guardarConfigUsuario(usuario) {
+            if (usuario === 'luis') {
+                USUARIOS.luis.peso_inicial = parseFloat(document.getElementById('config-luis-peso').value);
+                USUARIOS.luis.calorias_objetivo = parseInt(document.getElementById('config-luis-calorias').value);
+                USUARIOS.luis.deficit = parseInt(document.getElementById('config-luis-deficit').value);
+                USUARIOS.luis.proteina_objetivo = parseInt(document.getElementById('config-luis-proteina').value);
+                USUARIOS.luis.carbos_objetivo = parseInt(document.getElementById('config-luis-carbos').value);
+                USUARIOS.luis.grasas_objetivo = parseInt(document.getElementById('config-luis-grasas').value);
+            } else if (usuario === 'pareja') {
+                USUARIOS.pareja.peso_inicial = parseFloat(document.getElementById('config-pareja-peso').value);
+                USUARIOS.pareja.calorias_objetivo = parseInt(document.getElementById('config-pareja-calorias').value);
+                USUARIOS.pareja.deficit = parseInt(document.getElementById('config-pareja-deficit').value);
+                USUARIOS.pareja.proteina_objetivo = parseInt(document.getElementById('config-pareja-proteina').value);
+                USUARIOS.pareja.carbos_objetivo = parseInt(document.getElementById('config-pareja-carbos').value);
+                USUARIOS.pareja.grasas_objetivo = parseInt(document.getElementById('config-pareja-grasas').value);
+            }
+
+            guardarConfiguracionLocal();
+            renderizar();
+            alert('✓ Configuración guardada correctamente');
+        }
+
+        function limpiarTodosDatos() {
+            if (confirm('⚠️ ¿Estás seguro de que quieres eliminar TODOS los datos registrados? Esta acción no se puede deshacer.')) {
+                if (confirm('⚠️ SEGUNDA CONFIRMACIÓN: ¿Realmente deseas eliminar todos los datos?')) {
+                    window.productos = [];
+                    window.comidas = [];
+                    window.entrenamientos = [];
+                    window.pesos = [];
+                    guardarDatos();
+                    renderizar();
+                    alert('✓ Todos los datos han sido eliminados');
+                }
+            }
+        }
+
+        function guardarComida() {
+            const comida = {
+                id: Date.now(),
+                usuario: usuarioActual,
+                fecha: window.fechaHoy,
+                nombre: document.getElementById('comida-nombre').value,
+                peso: parseFloat(document.getElementById('comida-peso').value),
+                calorias: parseFloat(document.getElementById('comida-calorias').value),
+                proteina: parseFloat(document.getElementById('comida-proteina').value),
+                carbos: parseFloat(document.getElementById('comida-carbos').value),
+                grasas: parseFloat(document.getElementById('comida-grasas').value)
+            };
+
+            if (!comida.nombre || !comida.peso || !comida.calorias) {
+                alert('Completa los campos requeridos');
+                return;
+            }
+
+            window.comidas.push(comida);
+            guardarDatos();
+            renderizar();
+            closeModal('modal-comida');
+            document.getElementById('comida-nombre').value = '';
+            document.getElementById('comida-peso').value = '';
+            document.getElementById('comida-calorias').value = '';
+            document.getElementById('comida-proteina').value = '';
+            document.getElementById('comida-carbos').value = '';
+            document.getElementById('comida-grasas').value = '';
+        }
+
+        function guardarProducto() {
+            const producto = {
+                id: Date.now(),
+                nombre: document.getElementById('producto-nombre').value,
+                porcion: parseFloat(document.getElementById('producto-porcion').value),
+                calorias: parseFloat(document.getElementById('producto-calorias').value),
+                proteina: parseFloat(document.getElementById('producto-proteina').value),
+                carbos: parseFloat(document.getElementById('producto-carbos').value),
+                grasas: parseFloat(document.getElementById('producto-grasas').value)
+            };
+
+            if (!producto.nombre || !producto.porcion || !producto.calorias) {
+                alert('Completa los campos requeridos');
+                return;
+            }
+
+            window.productos.push(producto);
+            guardarDatos();
+            renderizar();
+            closeModal('modal-producto');
+        }
+
+        function actualizarCamposEntrenamiento() {
+            const tipo = document.getElementById('entrenamiento-tipo').value;
+            document.getElementById('campos-fuerza').style.display = tipo === 'fuerza' ? 'block' : 'none';
+            document.getElementById('campos-cardio').style.display = tipo === 'cardio' ? 'block' : 'none';
+            document.getElementById('campos-deporte').style.display = tipo === 'deporte' ? 'block' : 'none';
+        }
+
+        function guardarEntrenamiento() {
+            const tipo = document.getElementById('entrenamiento-tipo').value;
+            if (!tipo) {
+                alert('Selecciona tipo de entrenamiento');
+                return;
+            }
+
+            let entrenamiento = {
+                id: Date.now(),
+                usuario: usuarioActual,
+                fecha: window.fechaHoy,
+                tipo: tipo
+            };
+
+            if (tipo === 'fuerza') {
+                entrenamiento.ejercicio = document.getElementById('fuerza-ejercicio').value;
+                entrenamiento.series = parseInt(document.getElementById('fuerza-series').value);
+                entrenamiento.reps = parseInt(document.getElementById('fuerza-reps').value);
+                entrenamiento.peso = parseFloat(document.getElementById('fuerza-peso').value);
+            } else if (tipo === 'cardio') {
+                entrenamiento.duracion = parseInt(document.getElementById('cardio-duracion').value);
+                entrenamiento.velocidad = parseFloat(document.getElementById('cardio-velocidad').value);
+                entrenamiento.inclinacion = parseFloat(document.getElementById('cardio-inclinacion').value);
+                entrenamiento.intensidad = document.getElementById('cardio-intensidad').value;
+            } else if (tipo === 'deporte') {
+                entrenamiento.deporte = document.getElementById('deporte-tipo').value;
+                entrenamiento.duracion = parseInt(document.getElementById('deporte-duracion').value);
+                entrenamiento.intensidad = document.getElementById('deporte-intensidad').value;
+            }
+
+            window.entrenamientos.push(entrenamiento);
+            guardarDatos();
+            renderizar();
+            closeModal('modal-entrenamiento');
+        }
+
+        function guardarPeso() {
+            const peso = {
+                id: Date.now(),
+                usuario: usuarioActual,
+                fecha: window.fechaHoy,
+                hora: document.getElementById('peso-hora').value,
+                valor: parseFloat(document.getElementById('peso-valor').value)
+            };
+
+            if (!peso.valor) {
+                alert('Ingresa tu peso');
+                return;
+            }
+
+            window.pesos.push(peso);
+            guardarDatos();
+            renderizar();
+            closeModal('modal-peso');
+        }
+
+        function eliminarComida(id) {
+            window.comidas = window.comidas.filter(c => c.id !== id);
+            guardarDatos();
+            renderizar();
+        }
+
+        function eliminarEntrenamiento(id) {
+            window.entrenamientos = window.entrenamientos.filter(e => e.id !== id);
+            guardarDatos();
+            renderizar();
+        }
+
+        function calcularCaloriasQuemadas() {
+            const hoy = window.fechaHoy;
+            const entrenamientosHoy = window.entrenamientos.filter(e => e.fecha === hoy && e.usuario === usuarioActual);
+            let total = 2500;
+
+            entrenamientosHoy.forEach(e => {
+                if (e.tipo === 'fuerza') {
+                    total += (e.series * e.reps * 0.5);
+                } else if (e.tipo === 'cardio') {
+                    if (e.intensidad === 'baja') total += e.duracion * 5;
+                    if (e.intensidad === 'moderada') total += e.duracion * 7;
+                    if (e.intensidad === 'alta') total += e.duracion * 10;
+                } else if (e.tipo === 'deporte') {
+                    if (e.intensidad === 'baja') total += e.duracion * 5;
+                    if (e.intensidad === 'moderada') total += e.duracion * 8;
+                    if (e.intensidad === 'alta') total += e.duracion * 11;
+                }
+            });
+
+            return total;
+        }
+
+        function renderizar() {
+            const config = USUARIOS[usuarioActual];
+            const hoy = window.fechaHoy;
+
+            // COMIDAS HOY
+            const comidashoy = window.comidas.filter(c => c.fecha === hoy && c.usuario === usuarioActual);
+            const totalCalorias = comidashoy.reduce((sum, c) => sum + c.calorias, 0);
+            const totalProteina = comidashoy.reduce((sum, c) => sum + c.proteina, 0);
+            const totalCarbos = comidashoy.reduce((sum, c) => sum + c.carbos, 0);
+            const totalGrasas = comidashoy.reduce((sum, c) => sum + c.grasas, 0);
+
+            const caloriasQuemadas = calcularCaloriasQuemadas();
+            const balance = totalCalorias - caloriasQuemadas;
+
+            // HEADER
+            document.getElementById('header-cal').textContent = `${Math.round(totalCalorias)}/${config.calorias_objetivo}`;
+            document.getElementById('header-deficit').textContent = balance >= 0 ? `+${Math.round(balance)}` : `${Math.round(balance)}`;
+
+            // DASHBOARD
+            document.getElementById('cal-hoy').textContent = Math.round(totalCalorias);
+            document.getElementById('cal-consumidas').textContent = Math.round(totalCalorias);
+            document.getElementById('cal-quemadas').textContent = Math.round(caloriasQuemadas);
+            document.getElementById('cal-progress').style.width = Math.min(100, (totalCalorias / config.calorias_objetivo) * 100) + '%';
+
+            document.getElementById('macro-p').textContent = Math.round(totalProteina);
+            document.getElementById('macro-c').textContent = Math.round(totalCarbos);
+            document.getElementById('macro-f').textContent = Math.round(totalGrasas);
+
+            // PESO
+            const pesoHoy = window.pesos.filter(p => p.fecha === hoy && p.usuario === usuarioActual).pop();
+            if (pesoHoy) {
+                document.getElementById('peso-actual').textContent = pesoHoy.valor;
+                document.getElementById('header-peso').textContent = pesoHoy.valor + 'kg';
+                const diferencia = pesoHoy.valor - config.peso_inicial;
+                const status = diferencia < 0 ? `✅ -${Math.abs(diferencia).toFixed(1)}kg` : diferencia > 0 ? `⚠️ +${diferencia.toFixed(1)}kg` : '➡️ Sin cambios';
+                document.getElementById('weight-status').innerHTML = `<strong>${status}</strong> desde inicio`;
+            } else {
+                document.getElementById('peso-actual').textContent = '-';
+                document.getElementById('header-peso').textContent = '-';
+                document.getElementById('weight-status').innerHTML = 'Registra tu peso hoy';
+            }
+
+            // COMIDAS LIST
+            const comidaList = document.getElementById('comidas-list');
+            comidaList.innerHTML = comidashoy.map(c => `
+                <div class="entry-item">
+                    <div class="entry-info">
+                        <div class="entry-name">${c.nombre}</div>
+                        <div class="entry-details">${c.peso}g | P:${c.proteina.toFixed(0)}g C:${c.carbos.toFixed(0)}g F:${c.grasas.toFixed(0)}g</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="entry-value">${c.calorias} cal</div>
+                        <button style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; font-weight: 700;" onclick="eliminarComida(${c.id})">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+
+            if (comidashoy.length === 0) {
+                document.getElementById('empty-comidas').style.display = 'block';
+            } else {
+                document.getElementById('empty-comidas').style.display = 'none';
+            }
+
+            // ENTRENAMIENTOS
+            const entrenamientosHoy = window.entrenamientos.filter(e => e.fecha === hoy && e.usuario === usuarioActual);
+            const entrenamientoList = document.getElementById('entrenamientos-list');
+            entrenamientoList.innerHTML = entrenamientosHoy.map(e => {
+                let detalles = '';
+                if (e.tipo === 'fuerza') {
+                    detalles = `${e.series}×${e.reps} @ ${e.peso}kg`;
+                } else if (e.tipo === 'cardio') {
+                    detalles = `${e.duracion}min @ ${e.velocidad}km/h (${e.inclinacion}% incl)`;
+                } else if (e.tipo === 'deporte') {
+                    detalles = `${e.duracion}min - ${e.intensidad}`;
+                }
+
+                return `
+                    <div class="entry-item">
+                        <div class="entry-info">
+                            <div class="entry-name">${e.ejercicio || e.deporte || 'Cardio'}</div>
+                            <div class="entry-details">${detalles}</div>
+                        </div>
+                        <button style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; font-weight: 700;" onclick="eliminarEntrenamiento(${e.id})">X</button>
+                    </div>
+                `;
+            }).join('');
+
+            if (entrenamientosHoy.length === 0) {
+                document.getElementById('empty-entrenamientos').style.display = 'block';
+            } else {
+                document.getElementById('empty-entrenamientos').style.display = 'none';
+            }
+
+            // PRODUCTOS
+            const productosHtml = window.productos.map(p => `
+                <div class="entry-item">
+                    <div class="entry-info">
+                        <div class="entry-name">${p.nombre}</div>
+                        <div class="entry-details">Ref: ${p.porcion}g | ${p.calorias}cal | P:${p.proteina}g C:${p.carbos}g F:${p.grasas}g</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('productos-list').innerHTML = productosHtml || '<p style="color: #64748b; text-align: center; padding: 20px;">Sin productos aún</p>';
+        }
+
+        function actualizarGraficos() {
+            const config = USUARIOS[usuarioActual];
+            const pesosUsuario = window.pesos.filter(p => p.usuario === usuarioActual).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+            // GRÁFICO PESO
+            if (pesosUsuario.length > 0) {
+                const ctx = document.getElementById('chart-peso').getContext('2d');
+                if (chartPeso) chartPeso.destroy();
+                chartPeso = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: pesosUsuario.map(p => p.fecha),
+                        datasets: [{
+                            label: 'Peso (kg)',
+                            data: pesosUsuario.map(p => p.valor),
+                            borderColor: '#ff9f40',
+                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#ff9f40',
+                            pointBorderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: 'rgba(51, 65, 85, 0.2)' }
+                            },
+                            x: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // GRÁFICO CALORÍAS SEMANAL
+            const comidashace7dias = window.comidas.filter(c => {
+                const fecha = new Date(c.fecha);
+                const hace7 = new Date();
+                hace7.setDate(hace7.getDate() - 7);
+                return fecha >= hace7 && c.usuario === usuarioActual;
+            });
+
+            const calorasPorDia = {};
+            for (let i = 7; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(fecha.getDate() - i);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                calorasPorDia[fechaStr] = comidashace7dias
+                    .filter(c => c.fecha === fechaStr)
+                    .reduce((sum, c) => sum + c.calorias, 0);
+            }
+
+            const ctxCal = document.getElementById('chart-calorias').getContext('2d');
+            if (chartCalorias) chartCalorias.destroy();
+            chartCalorias = new Chart(ctxCal, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(calorasPorDia),
+                    datasets: [{
+                        label: 'Calorías',
+                        data: Object.values(calorasPorDia),
+                        backgroundColor: '#ff9f40',
+                        borderColor: '#f97316',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(51, 65, 85, 0.2)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // COMPARATIVA
+            const comidaLuis = window.comidas.filter(c => c.fecha === window.fechaHoy && c.usuario === 'luis');
+            const comidaPareja = window.comidas.filter(c => c.fecha === window.fechaHoy && c.usuario === 'pareja');
+
+            const calLuis = comidaLuis.reduce((s, c) => s + c.calorias, 0);
+            const calPareja = comidaPareja.reduce((s, c) => s + c.calorias, 0);
+
+            const pesoLuis = window.pesos.filter(p => p.fecha === window.fechaHoy && p.usuario === 'luis').pop();
+            const pesoPareja = window.pesos.filter(p => p.fecha === window.fechaHoy && p.usuario === 'pareja').pop();
+
+            document.getElementById('comparison-container').innerHTML = `
+                <div class="comparison-row">
+                    <span class="comparison-label">Calorías hoy</span>
+                    <span class="comparison-you">${Math.round(calLuis)}</span>
+                    <span class="comparison-partner">${Math.round(calPareja)}</span>
+                </div>
+                <div class="comparison-row">
+                    <span class="comparison-label">Peso actual</span>
+                    <span class="comparison-you">${pesoLuis ? pesoLuis.valor + 'kg' : '-'}</span>
+                    <span class="comparison-partner">${pesoPareja ? pesoPareja.valor + 'kg' : '-'}</span>
+                </div>
+            `;
+
+            // HISTÓRICO
+            const pesosOrdenados = window.pesos.filter(p => p.usuario === usuarioActual).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            document.getElementById('historico-peso').innerHTML = pesosOrdenados.slice(0, 10).map(p => `
+                <div class="entry-item">
+                    <div><strong>${p.fecha}</strong> a las ${p.hora}</div>
+                    <div style="color: #ff9f40; font-weight: 700;">${p.valor}kg</div>
+                </div>
+            `).join('');
+        }
+
+        function generateReport(periodo) {
+            const config = USUARIOS[usuarioActual];
+            let datos = '';
+
+            if (periodo === 'today') {
+                datos = generarDatosReporte(window.fechaHoy);
+            } else if (periodo === 'week') {
+                const hace7dias = new Date();
+                hace7dias.setDate(hace7dias.getDate() - 7);
+                datos = generarDatosReportePeriodo(hace7dias.toISOString().split('T')[0], window.fechaHoy);
+            } else if (periodo === 'month') {
+                const hace30dias = new Date();
+                hace30dias.setDate(hace30dias.getDate() - 30);
+                datos = generarDatosReportePeriodo(hace30dias.toISOString().split('T')[0], window.fechaHoy);
+            }
+
+            const reporte = `
+OPERACIÓN BIKINI PERPETUA - REPORTE ${periodo.toUpperCase()}
+${'='.repeat(60)}
+
+USUARIO: ${USUARIOS[usuarioActual].nombre}
+OBJETIVO: Déficit de ${config.deficit} cal/día
+META DIARIA: ${config.calorias_objetivo} cal | P:${config.proteina_objetivo}g C:${config.carbos_objetivo}g F:${config.grasas_objetivo}g
+
+${datos}
+
+ANÁLISIS PERSONAL (completa esto):
+[Cómo te sientes, cambios observados, dificultades, etc.]
+
+${'='.repeat(60)}
+Envía este reporte al Coach IA para recomendaciones personalizadas.
+`;
+
+            document.getElementById('report-text').value = reporte;
+        }
+
+        function generarDatosReporte(fecha) {
+            const comidas = window.comidas.filter(c => c.fecha === fecha && c.usuario === usuarioActual);
+            const entrenamientos = window.entrenamientos.filter(e => e.fecha === fecha && e.usuario === usuarioActual);
+            const peso = window.pesos.filter(p => p.fecha === fecha && p.usuario === usuarioActual).pop();
+
+            const totalCal = comidas.reduce((s, c) => s + c.calorias, 0);
+            const totalP = comidas.reduce((s, c) => s + c.proteina, 0);
+            const totalC = comidas.reduce((s, c) => s + c.carbos, 0);
+            const totalF = comidas.reduce((s, c) => s + c.grasas, 0);
+            const calQuemadas = calcularCaloriasQuemadas();
+
+            let texto = `
+FECHA: ${fecha}
+PESO: ${peso ? peso.valor + 'kg' : 'No registrado'}
+
+NUTRICIÓN:
+  Calorías consumidas: ${Math.round(totalCal)}
+  Calorías quemadas: ${Math.round(calQuemadas)}
+  Balance: ${Math.round(totalCal - calQuemadas)}
+  
+  Macros:
+    - Proteína: ${totalP.toFixed(0)}g / ${USUARIOS[usuarioActual].proteina_objetivo}g
+    - Carbos: ${totalC.toFixed(0)}g / ${USUARIOS[usuarioActual].carbos_objetivo}g
+    - Grasas: ${totalF.toFixed(0)}g / ${USUARIOS[usuarioActual].grasas_objetivo}g
+
+COMIDAS:
+${comidas.length > 0 ? comidas.map(c => `  • ${c.nombre} (${c.peso}g) - ${c.calorias}cal`).join('\n') : '  Sin comidas registradas'}
+
+ENTRENAMIENTOS:
+${entrenamientos.length > 0 ? entrenamientos.map(e => {
+                if (e.tipo === 'fuerza') return `  • ${e.ejercicio} - ${e.series}×${e.reps} @ ${e.peso}kg`;
+                if (e.tipo === 'cardio') return `  • Cardio ${e.duracion}min @ ${e.velocidad}km/h (${e.inclinacion}%)`;
+                if (e.tipo === 'deporte') return `  • ${e.deporte} (${e.duracion}min)`;
+            }).join('\n') : '  Sin entrenamientos registrados'}
+`;
+
+            return texto;
+        }
+
+        function generarDatosReportePeriodo(desde, hasta) {
+            // Simplificado para períodos
+            return generarDatosReporte(hasta);
+        }
+
+        function copiarReporte() {
+            const texto = document.getElementById('report-text').value;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('✓ Reporte copiado al portapapeles');
+            });
+        }
+
+        // INIT
+        init();
+
+        // SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+                self.addEventListener('install', event => {
+                    console.log('Service Worker installed');
+                    self.skipWaiting();
+                });
+                self.addEventListener('activate', event => {
+                    console.log('Service Worker activated');
+                    event.waitUntil(clients.claim());
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        fetch(event.request)
+                            .then(response => response)
+                            .catch(() => new Response('Offline', { status: 503 }))
+                    );
+                });
+            `)).catch(err => console.log('SW registration failed:', err));
+        }
+    </script>
+</body>
+</html>
