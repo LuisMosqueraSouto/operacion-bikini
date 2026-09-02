@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Operación Bikini">
+    <title>Operación Bikini Perpetua</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #ffcd00;
+            --accent: #9ef01b;
+            --dark: #0f172a;
+            --darker: #0a0f1a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a2a4a 0%, #0f172a 100%);
+            padding: 15px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 18px;
+            color: var(--primary);
+            flex: 1;
+            text-align: center;
+        }
+
+        .user-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .user-btn {
+            padding: 8px 12px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .user-btn.active {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .user-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--primary);
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 10px;
+            background: transparent;
+            color: #aaa;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            white-space: nowrap;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .content {
+            padding: 15px;
+            min-height: calc(100vh - 120px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== AVATAR INTERACTIVO ===== */
+        .avatar-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin: 20px auto;
+            border: 3px solid var(--primary);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 100%;
+            padding-top: 150%;
+        }
+
+        .avatar-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .muscle-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .muscle-area {
+            fill: transparent;
+            stroke: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .muscle-area:hover {
+            fill: rgba(158, 240, 27, 0.2);
+            filter: drop-shadow(0 0 5px rgba(158, 240, 27, 0.6));
+        }
+
+        .muscle-area.active {
+            fill: rgba(158, 240, 27, 0.5);
+            filter: drop-shadow(0 0 15px rgba(158, 240, 27, 0.9));
+        }
+
+        /* ===== EJERCICIOS ===== */
+        .exercise-selector {
+            margin: 20px 0;
+        }
+
+        .exercise-selector label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .muscle-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .muscle-btn {
+            padding: 12px;
+            background: var(--darker);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .muscle-btn.selected {
+            background: var(--primary);
+            color: var(--dark);
+            box-shadow: 0 0 20px var(--primary);
+            transform: scale(1.05);
+        }
+
+        .muscle-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .exercise-dropdown {
+            width: 100%;
+            padding: 12px;
+            background: var(--darker);
+            border: 2px solid var(--primary);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .exercise-history {
+            background: var(--darker);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .exercise-history h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .history-item {
+            padding: 8px;
+            background: rgba(255, 205, 0, 0.05);
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .series-form {
+            background: var(--darker);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .series-form h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            background: var(--dark);
+            border: 1px solid var(--primary);
+            color: #fff;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-add-series {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .btn-add-series:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        /* ===== NUTRICIÓN ===== */
+        .meal-form {
+            background: var(--darker);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .meal-form h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .calorie-counter {
+            background: linear-gradient(135deg, rgba(255, 205, 0, 0.1) 0%, rgba(158, 240, 27, 0.1) 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .calorie-counter p {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .calorie-counter .total {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .meals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .meal-item {
+            background: var(--darker);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .meal-item .name {
+            flex: 1;
+            color: #fff;
+        }
+
+        .meal-item .cal {
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .btn-delete:hover {
+            background: #cc0000;
+        }
+
+        /* ===== PESO ===== */
+        .weight-form {
+            background: var(--darker);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .weight-form h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .weight-history {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .weight-item {
+            background: var(--darker);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .weight-item .value {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .weight-item .datetime {
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        /* ===== PROGRESO ===== */
+        .chart-container {
+            background: var(--darker);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid var(--primary);
+        }
+
+        .chart-container h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 11px;
+            border-top: 1px solid var(--primary);
+            margin-top: 30px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 16px;
+            }
+
+            .tabs {
+                overflow-x: scroll;
+            }
+
+            .tab-btn {
+                font-size: 11px;
+                padding: 10px 8px;
+            }
+
+            .muscle-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💪 Operación Bikini</h1>
+            <div class="user-selector">
+                <button class="user-btn active" data-user="luis">LM</button>
+                <button class="user-btn" data-user="pareja">RG</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="entrenamientos">Entrenamientos</button>
+            <button class="tab-btn" data-tab="nutricion">Nutrición</button>
+            <button class="tab-btn" data-tab="peso">Peso</button>
+            <button class="tab-btn" data-tab="progreso">Progreso</button>
+        </div>
+
+        <div class="content">
+            <!-- ===== TAB: ENTRENAMIENTOS ===== -->
+            <div class="tab-content active" id="entrenamientos">
+                
+                <!-- AVATAR INTERACTIVO -->
+                <div class="avatar-wrapper">
+                    <div class="avatar-container">
+                        <img src="avatar_referencia.jpg" alt="Avatar" class="avatar-image">
+                        <svg class="muscle-overlay" id="muscleOverlay" viewBox="0 0 300 600" preserveAspectRatio="xMidYMid slice">
+                            <!-- VISTA FRONTAL (LADO IZQUIERDO) -->
+                            
+                            <!-- PECHO IZQUIERDO -->
+                            <ellipse class="muscle-area" data-muscle="pecho" cx="70" cy="85" rx="22" ry="35"/>
+                            
+                            <!-- PECHO DERECHO (en la vista trasera) -->
+                            <ellipse class="muscle-area" data-muscle="pecho" cx="230" cy="85" rx="22" ry="35"/>
+                            
+                            <!-- ABDOMINALES SUPERIORES -->
+                            <ellipse class="muscle-area" data-muscle="core" cx="70" cy="130" rx="18" ry="20"/>
+                            <ellipse class="muscle-area" data-muscle="core" cx="230" cy="130" rx="18" ry="20"/>
+                            
+                            <!-- ABDOMINALES INFERIORES -->
+                            <ellipse class="muscle-area" data-muscle="core" cx="70" cy="170" rx="18" ry="22"/>
+                            <ellipse class="muscle-area" data-muscle="core" cx="230" cy="170" rx="18" ry="22"/>
+                            
+                            <!-- OBLICUOS IZQUIERDO -->
+                            <path class="muscle-area" data-muscle="core" d="M 50 130 Q 45 160 55 190"/>
+                            
+                            <!-- OBLICUOS DERECHO -->
+                            <path class="muscle-area" data-muscle="core" d="M 250 130 Q 255 160 245 190"/>
+                            
+                            <!-- HOMBRO IZQUIERDO (FRONTAL) -->
+                            <circle class="muscle-area" data-muscle="hombro" cx="38" cy="65" r="12"/>
+                            
+                            <!-- HOMBRO DERECHO (TRASERO) -->
+                            <circle class="muscle-area" data-muscle="hombro" cx="262" cy="65" r="12"/>
+                            
+                            <!-- BÍCEP IZQUIERDO -->
+                            <ellipse class="muscle-area" data-muscle="bicep" cx="22" cy="95" rx="11" ry="28"/>
+                            
+                            <!-- TRÍCEP DERECHO (TRASERO) -->
+                            <ellipse class="muscle-area" data-muscle="tricep" cx="278" cy="95" rx="11" ry="28"/>
+                            
+                            <!-- ESPALDA IZQUIERDA (TRASERA) -->
+                            <path class="muscle-area" data-muscle="espalda" d="M 220 80 Q 200 120 195 160"/>
+                            
+                            <!-- ESPALDA DERECHA (TRASERA) -->
+                            <path class="muscle-area" data-muscle="espalda" d="M 80 80 Q 100 120 105 160"/>
+                            
+                            <!-- CUÁDRICEPS IZQUIERDO -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="62" cy="280" rx="20" ry="65"/>
+                            
+                            <!-- CUÁDRICEPS DERECHO -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="238" cy="280" rx="20" ry="65"/>
+                            
+                            <!-- PANTORRILLA IZQUIERDA -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="60" cy="420" rx="16" ry="45"/>
+                            
+                            <!-- PANTORRILLA DERECHA -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="240" cy="420" rx="16" ry="45"/>
+                            
+                            <!-- GLÚTEO IZQUIERDO (TRASERO) -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="70" cy="220" rx="18" ry="25"/>
+                            
+                            <!-- GLÚTEO DERECHO (TRASERO) -->
+                            <ellipse class="muscle-area" data-muscle="pierna" cx="230" cy="220" rx="18" ry="25"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- SELECTOR DE MÚSCULOS -->
+                <div class="exercise-selector">
+                    <label>Selecciona Grupo Muscular:</label>
+                    <div class="muscle-buttons">
+                        <button class="muscle-btn" data-muscle="pecho">Pecho</button>
+                        <button class="muscle-btn" data-muscle="espalda">Espalda</button>
+                        <button class="muscle-btn" data-muscle="hombro">Hombro</button>
+                        <button class="muscle-btn" data-muscle="bicep">Bícep</button>
+                        <button class="muscle-btn" data-muscle="tricep">Trícep</button>
+                        <button class="muscle-btn" data-muscle="pierna">Pierna</button>
+                    </div>
+                </div>
+
+                <div class="exercise-selector">
+                    <label>Selecciona Ejercicio:</label>
+                    <select class="exercise-dropdown" id="exerciseSelect" onchange="showExerciseDetails()">
+                        <option value="">-- Selecciona ejercicio --</option>
+                    </select>
+                </div>
+
+                <div id="exerciseHistory"></div>
+                <div id="seriesForm"></div>
+            </div>
+
+            <!-- ===== TAB: NUTRICIÓN ===== -->
+            <div class="tab-content" id="nutricion">
+                <div class="meal-form">
+                    <h3>Añadir Comida</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre de la comida</label>
+                            <input type="text" id="mealName" placeholder="Ej: Pollo con arroz">
+                        </div>
+                        <div class="form-group">
+                            <label>Calorías</label>
+                            <input type="number" id="mealCalories" placeholder="Ej: 500">
+                        </div>
+                    </div>
+                    <button class="btn-add-series" onclick="addMeal()">Añadir Comida</button>
+                </div>
+
+                <div class="calorie-counter">
+                    <p>Total del día:</p>
+                    <div class="total" id="totalCalories">0 cal</div>
+                </div>
+
+                <div class="meals-list" id="mealsList"></div>
+            </div>
+
+            <!-- ===== TAB: PESO ===== -->
+            <div class="tab-content" id="peso">
+                <div class="weight-form">
+                    <h3>Registrar Peso</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="number" id="weightValue" step="0.1" placeholder="Ej: 85.5">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" id="weightDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Hora</label>
+                            <input type="time" id="weightTime">
+                        </div>
+                    </div>
+                    <button class="btn-add-series" onclick="addWeight()">Registrar Peso</button>
+                </div>
+
+                <div class="weight-history" id="weightHistory"></div>
+            </div>
+
+            <!-- ===== TAB: PROGRESO ===== -->
+            <div class="tab-content" id="progreso">
+                <div class="chart-container">
+                    <h3>Entrenamientos (últimos 7 días)</h3>
+                    <canvas id="workoutChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Calorías (últimos 7 días)</h3>
+                    <canvas id="calorieChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Evolución de Peso</h3>
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Operación Bikini Perpetua v3.0 | Datos guardados localmente</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentUser = 'luis';
+        let currentMuscle = null;
+        let chartInstances = {};
+
+        const muscleGroups = {
+            pecho: ['Press pecho vertical', 'Pecho máquina'],
+            espalda: ['Jalón al pecho', 'Jalón unilateral', 'Jalón máquina roja'],
+            hombro: ['Polea cara', 'Máquina unilateral', 'Hombro press'],
+            bicep: ['Bícep supino', 'Bícep braquial', 'Bícep press'],
+            tricep: ['Trícep press', 'Trícep polea'],
+            pierna: ['Prensa', 'Extensión cuádriceps', 'Abductor cerrar', 'Abductor abrir', 'Sentadillas', 'Isquio'],
+            core: ['Abdominales']
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            console.log('Inicializando app...');
+
+            // User selector
+            document.querySelectorAll('.user-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchUser(this.dataset.user);
+                });
+            });
+
+            // Tab switcher
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+
+            // Muscle buttons
+            document.querySelectorAll('.muscle-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Click en botón:', this.dataset.muscle);
+                    selectMuscle(this.dataset.muscle);
+                });
+            });
+
+            // Muscle overlay areas
+            document.querySelectorAll('.muscle-area').forEach(area => {
+                area.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    console.log('Click en área:', this.dataset.muscle);
+                    selectMuscle(this.dataset.muscle);
+                });
+            });
+
+            updateUI();
+        }
+
+        function switchUser(user) {
+            currentUser = user;
+            document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-user="${user}"]`).classList.add('active');
+            updateUI();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            if(tab === 'progreso') updateCharts();
+        }
+
+        function selectMuscle(muscle) {
+            console.log('Seleccionando músculo:', muscle);
+            currentMuscle = muscle;
+
+            // Update button highlight
+            document.querySelectorAll('.muscle-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.muscle === muscle);
+            });
+
+            // Update overlay highlight - solo los que coincidan
+            document.querySelectorAll('.muscle-area').forEach(area => {
+                area.classList.toggle('active', area.dataset.muscle === muscle);
+            });
+
+            // Update exercise dropdown
+            const exercises = muscleGroups[muscle] || [];
+            const select = document.getElementById('exerciseSelect');
+            select.innerHTML = `<option value="">-- Selecciona ejercicio --</option>` +
+                exercises.map(e => `<option value="${e}">${e}</option>`).join('');
+            
+            document.getElementById('exerciseHistory').innerHTML = '';
+            document.getElementById('seriesForm').innerHTML = '';
+        }
+
+        function getStorageKey(type) {
+            return `bikini-${currentUser}-${type}`;
+        }
+
+        function getData(type) {
+            const key = getStorageKey(type);
+            return JSON.parse(localStorage.getItem(key)) || [];
+        }
+
+        function saveData(type, data) {
+            const key = getStorageKey(type);
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // Entrenamientos
+        function showExerciseDetails() {
+            const exercise = document.getElementById('exerciseSelect')?.value;
+            if(!exercise) return;
+
+            const workouts = getData('entrenamientos');
+            const recent = workouts
+                .filter(w => w.ejercicio === exercise)
+                .slice(-2)
+                .reverse();
+
+            let prMax = 0;
+            workouts.forEach(w => {
+                if(w.ejercicio === exercise && !w.calentamiento) {
+                    w.series.forEach(s => {
+                        if(s.peso > prMax) prMax = s.peso;
+                    });
+                }
+            });
+
+            const history = document.getElementById('exerciseHistory');
+            history.innerHTML = `
+                <div class="exercise-history">
+                    <h4>Últimos registros</h4>
+                    ${recent.length > 0 ? recent.map(w => `
+                        <div class="history-item">
+                            📅 ${w.fecha} | PR: ${prMax}kg | Series: ${w.series.length}
+                        </div>
+                    `).join('') : '<div class="history-item">Sin registros aún</div>'}
+                    <h4 style="margin-top: 10px;">PR Máximo: ${prMax}kg</h4>
+                </div>
+            `;
+
+            document.getElementById('seriesForm').innerHTML = `
+                <div class="series-form">
+                    <h4>Añadir Serie</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="number" id="seriesWeight" step="0.5" placeholder="Ej: 50">
+                        </div>
+                        <div class="form-group">
+                            <label>Repeticiones</label>
+                            <input type="number" id="seriesReps" placeholder="Ej: 8">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="seriesWarmup">
+                            <label for="seriesWarmup">Calentamiento</label>
+                        </div>
+                    </div>
+                    <button class="btn-add-series" onclick="addSeries('${exercise}')">Añadir Serie</button>
+                </div>
+            `;
+        }
+
+        function addSeries(exercise) {
+            const weight = parseFloat(document.getElementById('seriesWeight').value);
+            const reps = parseInt(document.getElementById('seriesReps').value);
+            const warmup = document.getElementById('seriesWarmup').checked;
+
+            if(!weight || !reps) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const workouts = getData('entrenamientos');
+            const today = new Date().toISOString().split('T')[0];
+            
+            let todayWorkout = workouts.find(w => w.fecha === today && w.ejercicio === exercise);
+            if(!todayWorkout) {
+                todayWorkout = {
+                    fecha: today,
+                    ejercicio: exercise,
+                    series: [],
+                    calentamiento: warmup
+                };
+                workouts.push(todayWorkout);
+            }
+
+            todayWorkout.series.push({ peso: weight, reps: reps });
+            saveData('entrenamientos', workouts);
+
+            document.getElementById('seriesWeight').value = '';
+            document.getElementById('seriesReps').value = '';
+            document.getElementById('seriesWarmup').checked = false;
+
+            showExerciseDetails();
+        }
+
+        // Nutrición
+        function addMeal() {
+            const name = document.getElementById('mealName').value;
+            const calories = parseInt(document.getElementById('mealCalories').value);
+
+            if(!name || !calories) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const meals = getData('comidas');
+            const today = new Date().toISOString().split('T')[0];
+            
+            meals.push({
+                fecha: today,
+                nombre: name,
+                calorias: calories
+            });
+
+            saveData('comidas', meals);
+            document.getElementById('mealName').value = '';
+            document.getElementById('mealCalories').value = '';
+
+            updateUI();
+        }
+
+        // Peso
+        function addWeight() {
+            const weight = parseFloat(document.getElementById('weightValue').value);
+            const date = document.getElementById('weightDate').value;
+            const time = document.getElementById('weightTime').value;
+
+            if(!weight || !date || !time) {
+                alert('Completa todos los campos');
+                return;
+            }
+
+            const weights = getData('pesos');
+            weights.push({
+                peso: weight,
+                fecha: date,
+                hora: time
+            });
+
+            saveData('pesos', weights);
+            document.getElementById('weightValue').value = '';
+            document.getElementById('weightDate').value = '';
+            document.getElementById('weightTime').value = '';
+
+            updateUI();
+        }
+
+        function updateUI() {
+            updateMeals();
+            updateWeights();
+        }
+
+        function updateMeals() {
+            const meals = getData('comidas');
+            const today = new Date().toISOString().split('T')[0];
+            const todayMeals = meals.filter(m => m.fecha === today);
+            const total = todayMeals.reduce((sum, m) => sum + m.calorias, 0);
+
+            document.getElementById('totalCalories').textContent = `${total} cal`;
+
+            const list = document.getElementById('mealsList');
+            list.innerHTML = todayMeals.map((meal, idx) => `
+                <div class="meal-item">
+                    <div class="name">${meal.nombre}</div>
+                    <div class="cal">${meal.calorias} cal</div>
+                    <button class="btn-delete" onclick="deleteMeal(${idx})">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteMeal(idx) {
+            const meals = getData('comidas');
+            const today = new Date().toISOString().split('T')[0];
+            const todayMeals = meals.filter(m => m.fecha === today);
+            todayMeals.splice(idx, 1);
+            
+            const allMeals = meals.filter(m => m.fecha !== today).concat(todayMeals);
+            saveData('comidas', allMeals);
+            updateUI();
+        }
+
+        function updateWeights() {
+            const weights = getData('pesos');
+            weights.sort((a, b) => {
+                const dateA = new Date(a.fecha + 'T' + a.hora);
+                const dateB = new Date(b.fecha + 'T' + b.hora);
+                return dateB - dateA;
+            });
+
+            const list = document.getElementById('weightHistory');
+            list.innerHTML = weights.slice(0, 10).map((w, idx) => `
+                <div class="weight-item">
+                    <div>
+                        <div class="value">${w.peso} kg</div>
+                        <div class="datetime">${w.fecha} ${w.hora}</div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteWeight(${idx})">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteWeight(idx) {
+            const weights = getData('pesos');
+            weights.sort((a, b) => {
+                const dateA = new Date(a.fecha + 'T' + a.hora);
+                const dateB = new Date(b.fecha + 'T' + b.hora);
+                return dateB - dateA;
+            });
+            weights.splice(idx, 1);
+            saveData('pesos', weights);
+            updateUI();
+        }
+
+        function updateCharts() {
+            const today = new Date();
+            const last7 = [];
+            for(let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                last7.push(d.toISOString().split('T')[0]);
+            }
+
+            const workouts = getData('entrenamientos');
+            const workoutCounts = last7.map(date => {
+                return workouts.filter(w => w.fecha === date).length;
+            });
+
+            updateChart('workoutChart', {
+                type: 'bar',
+                data: {
+                    labels: last7.map(d => new Date(d).toLocaleDateString('es-ES', { weekday: 'short' })),
+                    datasets: [{
+                        label: 'Entrenamientos',
+                        data: workoutCounts,
+                        backgroundColor: '#ffcd00',
+                        borderColor: '#ffcd00'
+                    }]
+                }
+            });
+
+            const meals = getData('comidas');
+            const calorieDays = last7.map(date => {
+                return meals.filter(m => m.fecha === date).reduce((sum, m) => sum + m.calorias, 0);
+            });
+
+            updateChart('calorieChart', {
+                type: 'line',
+                data: {
+                    labels: last7.map(d => new Date(d).toLocaleDateString('es-ES', { weekday: 'short' })),
+                    datasets: [{
+                        label: 'Calorías',
+                        data: calorieDays,
+                        borderColor: '#ffcd00',
+                        backgroundColor: 'rgba(255, 205, 0, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                }
+            });
+
+            const weights = getData('pesos');
+            weights.sort((a, b) => {
+                const dateA = new Date(a.fecha + 'T' + a.hora);
+                const dateB = new Date(b.fecha + 'T' + b.hora);
+                return dateA - dateB;
+            });
+
+            updateChart('weightChart', {
+                type: 'line',
+                data: {
+                    labels: weights.map(w => `${w.fecha} ${w.hora}`),
+                    datasets: [{
+                        label: 'Peso (kg)',
+                        data: weights.map(w => w.peso),
+                        borderColor: '#9ef01b',
+                        backgroundColor: 'rgba(158, 240, 27, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                }
+            });
+        }
+
+        function updateChart(canvasId, config) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if(chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                ...config,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#aaa' },
+                            grid: { color: 'rgba(255, 205, 0, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#aaa' },
+                            grid: { color: 'rgba(255, 205, 0, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
